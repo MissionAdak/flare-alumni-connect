@@ -1,0 +1,442 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ALUMNI
+  STUDENT
+  COLLEGE_ADMIN
+  UNIVERSITY_ADMIN
+  RECRUITER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  SUSPENDED
+}
+
+enum MentorshipStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  FILLED
+}
+
+enum DonationStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id                String      @id @default(cuid())
+  email             String      @unique
+  password          String
+  firstName         String
+  lastName          String
+  phone             String?
+  profileImage      String?
+  role              UserRole
+  status            UserStatus  @default(PENDING)
+  emailVerified     Boolean     @default(false)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Profile fields
+  bio               String?
+  currentPosition   String?
+  company           String?
+  experience        Int?        // years of experience
+  skills            String[]    @default([])
+  cgpa              Float?
+  graduationYear    Int?
+  university        String?
+  college           String?
+  branch            String?
+
+  // Relationships
+  alumniProfile     AlumniProfile?
+  studentProfile    StudentProfile?
+  collegeProfile    CollegeProfile?
+  universityProfile UniversityProfile?
+  recruiterProfile  RecruiterProfile?
+
+  // Mentorship relationships
+  mentorSessions    MentorshipSession[] @relation("MentorSessions")
+  menteeSessions    MentorshipSession[] @relation("MenteeSessions")
+  mentorshipRequests MentorshipRequest[] @relation("MentorRequests")
+  sentRequests      MentorshipRequest[] @relation("StudentRequests")
+
+  // Content
+  videos            Video[]
+  posts             Post[]
+  comments          Comment[]
+
+  // Events
+  eventRegistrations EventRegistration[]
+  createdEvents     Event[] @relation("EventCreator")
+
+  // Jobs
+  jobApplications   JobApplication[]
+  postedJobs        Job[] @relation("JobPoster")
+
+  // Donations
+  donations         Donation[]
+
+  // Analytics
+  userAnalytics     UserAnalytics[]
+
+  @@map("users")
+}
+
+model AlumniProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  careerJourney     Json?    // Array of career milestones
+  achievements      String[] @default([])
+  certifications    String[] @default([])
+  socialLinks       Json?    // LinkedIn, GitHub, etc.
+  isAvailableForMentorship Boolean @default(true)
+  mentorshipRate    Float?   // per hour rate
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("alumni_profiles")
+}
+
+model StudentProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  studentId         String   @unique
+  currentYear       Int
+  currentSemester   Int
+  attendance        Float?   // percentage
+  internshipStatus  String?  // "none", "ongoing", "completed"
+  placementStatus   String?  // "not_placed", "placed", "offered"
+  placementCompany  String?
+  placementPackage  Float?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("student_profiles")
+}
+
+model CollegeProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  collegeName       String
+  collegeCode       String   @unique
+  address           String?
+  website           String?
+  naacGrade         String?
+  naacScore         Float?
+  accreditation     String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("college_profiles")
+}
+
+model UniversityProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  universityName    String
+  universityCode    String   @unique
+  address           String?
+  website           String?
+  naacGrade         String?
+  naacScore         Float?
+  accreditation     String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("university_profiles")
+}
+
+model RecruiterProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  companyName       String
+  companySize       String?  // "startup", "small", "medium", "large"
+  industry          String?
+  website           String?
+  isAlumniRecruiter Boolean @default(false)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("recruiter_profiles")
+}
+
+model Video {
+  id                String   @id @default(cuid())
+  title             String
+  description       String?
+  youtubeUrl        String?
+  cloudinaryUrl     String?
+  thumbnail         String?
+  duration          Int?     // in seconds
+  category          String?  // "mentorship", "career", "technical", etc.
+  tags              String[] @default([])
+  isPublic          Boolean  @default(true)
+  
+  authorId          String
+  author            User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  views             Int      @default(0)
+  likes             Int      @default(0)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("videos")
+}
+
+model Post {
+  id                String   @id @default(cuid())
+  title             String
+  content           String
+  image             String?
+  tags              String[] @default([])
+  isPublic          Boolean  @default(true)
+  
+  authorId          String
+  author            User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  likes             Int      @default(0)
+  comments          Comment[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("posts")
+}
+
+model Comment {
+  id                String   @id @default(cuid())
+  content           String
+  
+  authorId          String
+  author            User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  postId            String
+  post              Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("comments")
+}
+
+model MentorshipSession {
+  id                String            @id @default(cuid())
+  title             String
+  description       String?
+  scheduledAt       DateTime
+  duration          Int               // in minutes
+  meetingLink       String?
+  status            MentorshipStatus  @default(PENDING)
+  
+  mentorId          String
+  mentor            User              @relation("MentorSessions", fields: [mentorId], references: [id], onDelete: Cascade)
+  
+  menteeId          String
+  mentee            User              @relation("MenteeSessions", fields: [menteeId], references: [id], onDelete: Cascade)
+  
+  notes             String?
+  feedback          String?
+  rating            Int?              // 1-5
+  
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@map("mentorship_sessions")
+}
+
+model MentorshipRequest {
+  id                String            @id @default(cuid())
+  message           String?
+  status            MentorshipStatus  @default(PENDING)
+  
+  studentId         String
+  student           User              @relation("StudentRequests", fields: [studentId], references: [id], onDelete: Cascade)
+  
+  mentorId          String
+  mentor            User              @relation("MentorRequests", fields: [mentorId], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@map("mentorship_requests")
+}
+
+model Event {
+  id                String      @id @default(cuid())
+  title             String
+  description       String
+  eventDate         DateTime
+  endDate           DateTime?
+  location          String?
+  isVirtual         Boolean     @default(false)
+  meetingLink       String?
+  maxAttendees      Int?
+  registrationFee   Float?      @default(0)
+  status            EventStatus @default(DRAFT)
+  
+  creatorId         String
+  creator           User        @relation("EventCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  
+  registrations     EventRegistration[]
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@map("events")
+}
+
+model EventRegistration {
+  id                String   @id @default(cuid())
+  
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  eventId           String
+  event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  registrationDate  DateTime @default(now())
+  paymentStatus     String   @default("pending")
+  
+  @@unique([userId, eventId])
+  @@map("event_registrations")
+}
+
+model Job {
+  id                String    @id @default(cuid())
+  title             String
+  description       String
+  company           String
+  location          String?
+  isRemote          Boolean   @default(false)
+  salaryMin         Float?
+  salaryMax         Float?
+  experience        String?   // "0-2 years", "2-5 years", etc.
+  skills            String[]  @default([])
+  jobType           String?   // "full-time", "part-time", "internship"
+  status            JobStatus @default(DRAFT)
+  
+  posterId          String
+  poster            User      @relation("JobPoster", fields: [posterId], references: [id], onDelete: Cascade)
+  
+  applications      JobApplication[]
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("jobs")
+}
+
+model JobApplication {
+  id                String   @id @default(cuid())
+  coverLetter       String?
+  resumeUrl         String?
+  status            String   @default("pending") // "pending", "accepted", "rejected"
+  
+  applicantId       String
+  applicant         User     @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  
+  jobId             String
+  job               Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([applicantId, jobId])
+  @@map("job_applications")
+}
+
+model Donation {
+  id                String         @id @default(cuid())
+  amount            Float
+  currency          String         @default("INR")
+  purpose           String?        // "scholarship", "infrastructure", "general"
+  message           String?
+  status            DonationStatus @default(PENDING)
+  
+  donorId           String
+  donor             User           @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@map("donations")
+}
+
+model UserAnalytics {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  date              DateTime @default(now())
+  pageViews         Int      @default(0)
+  videoViews        Int      @default(0)
+  mentorshipHours   Float    @default(0)
+  donationsMade     Float    @default(0)
+  
+  @@map("user_analytics")
+}
+
+model SystemAnalytics {
+  id                String   @id @default(cuid())
+  date              DateTime @default(now())
+  totalUsers        Int
+  activeUsers       Int
+  totalVideos       Int
+  totalSessions     Int
+  totalDonations    Float
+  totalJobs         Int
+  
+  @@map("system_analytics")
+}

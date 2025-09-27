@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,11 +12,67 @@ import {
   Building,
   BarChart3,
   BookOpen,
-  LogOut
+  LogOut,
+  Loader2,
+  Plus
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import apiClient from "@/lib/api";
+import { toast } from "sonner";
 
 const CollegeDashboard = () => {
+  const { user, logout } = useAuth();
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [students, setStudents] = useState<any[]>([]);
+  const [alumni, setAlumni] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [dashboard, studentsData, alumniData, eventsData, analyticsData] = await Promise.all([
+          apiClient.getCollegeDashboard(),
+          apiClient.getCollegeStudents({ page: 1, limit: 10 }),
+          apiClient.getCollegeAlumni({ page: 1, limit: 10 }),
+          apiClient.getCollegeEvents(1, 10),
+          apiClient.getCollegeAnalytics()
+        ]);
+
+        setDashboardData(dashboard);
+        setStudents(studentsData.students);
+        setAlumni(alumniData.alumni);
+        setEvents(eventsData.events);
+        setAnalytics(analyticsData);
+      } catch (error: any) {
+        toast.error(error.message || "Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    toast.success("Logged out successfully");
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -29,13 +86,13 @@ const CollegeDashboard = () => {
             <Badge className="bg-accent/10 text-accent">College Portal</Badge>
           </div>
           <div className="flex items-center space-x-4">
-            <span className="text-muted-foreground">St. Xavier's College</span>
-            <Link to="/login">
-              <Button variant="outline" size="sm">
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
-            </Link>
+            <span className="text-muted-foreground">
+              {dashboardData?.college?.collegeName || 'College Portal'}
+            </span>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
           </div>
         </div>
       </header>
@@ -53,11 +110,13 @@ const CollegeDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Alumni</p>
-                  <p className="text-3xl font-bold text-primary">2,847</p>
+                  <p className="text-3xl font-bold text-primary">
+                    {dashboardData?.statistics?.totalAlumni || 0}
+                  </p>
                 </div>
                 <Users className="h-8 w-8 text-primary" />
               </div>
-              <p className="text-sm text-green-600 mt-2">+12% from last year</p>
+              <p className="text-sm text-green-600 mt-2">Active members</p>
             </CardContent>
           </Card>
 
@@ -66,11 +125,13 @@ const CollegeDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Current Students</p>
-                  <p className="text-3xl font-bold text-secondary">1,235</p>
+                  <p className="text-3xl font-bold text-secondary">
+                    {dashboardData?.statistics?.totalStudents || 0}
+                  </p>
                 </div>
                 <GraduationCap className="h-8 w-8 text-secondary" />
               </div>
-              <p className="text-sm text-green-600 mt-2">+8% enrollment</p>
+              <p className="text-sm text-green-600 mt-2">Enrolled students</p>
             </CardContent>
           </Card>
 
@@ -79,11 +140,13 @@ const CollegeDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Avg. CGPA</p>
-                  <p className="text-3xl font-bold text-accent">8.4</p>
+                  <p className="text-3xl font-bold text-accent">
+                    {dashboardData?.statistics?.averageCGPA || 'N/A'}
+                  </p>
                 </div>
                 <Award className="h-8 w-8 text-accent" />
               </div>
-              <p className="text-sm text-green-600 mt-2">+0.3 improvement</p>
+              <p className="text-sm text-green-600 mt-2">Academic performance</p>
             </CardContent>
           </Card>
 
@@ -92,11 +155,13 @@ const CollegeDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Placement Rate</p>
-                  <p className="text-3xl font-bold text-primary">92%</p>
+                  <p className="text-3xl font-bold text-primary">
+                    {dashboardData?.statistics?.placementPercentage || 0}%
+                  </p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-primary" />
               </div>
-              <p className="text-sm text-green-600 mt-2">+5% increase</p>
+              <p className="text-sm text-green-600 mt-2">Success rate</p>
             </CardContent>
           </Card>
         </div>
@@ -337,30 +402,27 @@ const CollegeDashboard = () => {
                   <div>
                     <h4 className="font-semibold mb-3">Upcoming Events</h4>
                     <div className="space-y-3">
-                      <div className="p-4 border rounded-lg">
-                        <div className="flex justify-between items-start mb-2">
-                          <h5 className="font-medium">Annual Alumni Meet 2024</h5>
-                          <Badge>Planning</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">December 15, 2024</p>
-                        <p className="text-sm">Expected: 500+ alumni</p>
-                      </div>
-                      <div className="p-4 border rounded-lg">
-                        <div className="flex justify-between items-start mb-2">
-                          <h5 className="font-medium">Campus Placement Drive</h5>
-                          <Badge variant="secondary">Active</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">January 20, 2025</p>
-                        <p className="text-sm">15 companies participating</p>
-                      </div>
-                      <div className="p-4 border rounded-lg">
-                        <div className="flex justify-between items-start mb-2">
-                          <h5 className="font-medium">Tech Workshop Series</h5>
-                          <Badge variant="outline">Draft</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">February 2025</p>
-                        <p className="text-sm">Alumni-led skill sessions</p>
-                      </div>
+                      {events.length > 0 ? (
+                        events.slice(0, 3).map((event) => (
+                          <div key={event.id} className="p-4 border rounded-lg">
+                            <div className="flex justify-between items-start mb-2">
+                              <h5 className="font-medium">{event.title}</h5>
+                              <Badge variant={
+                                event.status === 'PUBLISHED' ? 'default' : 
+                                event.status === 'DRAFT' ? 'outline' : 'secondary'
+                              }>
+                                {event.status}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              {new Date(event.eventDate).toLocaleDateString()}
+                            </p>
+                            <p className="text-sm">{event.description}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-muted-foreground text-sm">No events scheduled</p>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -371,15 +433,15 @@ const CollegeDashboard = () => {
                         <div className="space-y-2">
                           <div className="flex justify-between">
                             <span className="text-sm">Events Organized</span>
-                            <span className="font-medium">24</span>
+                            <span className="font-medium">{analytics?.totalEvents || 0}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-sm">Total Attendance</span>
-                            <span className="font-medium">3,450</span>
+                            <span className="text-sm">Total Students</span>
+                            <span className="font-medium">{analytics?.totalStudents || 0}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-sm">Alumni Participation</span>
-                            <span className="font-medium">65%</span>
+                            <span className="text-sm">Total Alumni</span>
+                            <span className="font-medium">{analytics?.totalAlumni || 0}</span>
                           </div>
                         </div>
                       </Card>
@@ -388,7 +450,7 @@ const CollegeDashboard = () => {
                 </div>
                 <div className="flex gap-2">
                   <Button className="flex-1">
-                    <Calendar className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4 mr-2" />
                     Create New Event
                   </Button>
                   <Button variant="outline" className="flex-1">View Calendar</Button>

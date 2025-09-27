@@ -12,15 +12,30 @@ import {
   Award,
   Mail,
   Lock,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const Login = () => {
   const [selectedUserType, setSelectedUserType] = useState<string>("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [registerData, setRegisterData] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    studentId: "",
+    collegeCode: "",
+    universityCode: "",
+    companyName: ""
+  });
   const navigate = useNavigate();
+  const { login, register } = useAuth();
 
   const userTypes = [
     { 
@@ -60,11 +75,59 @@ const Login = () => {
     }
   ];
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedUserType && email && password) {
-      // Navigate to the appropriate dashboard
-      navigate(`/dashboard/${selectedUserType}`);
+      setIsLoading(true);
+      try {
+        await login(email, password);
+        toast.success("Login successful!");
+        navigate(`/dashboard/${selectedUserType}`);
+      } catch (error: any) {
+        toast.error(error.message || "Login failed");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedUserType && email && password) {
+      setIsLoading(true);
+      try {
+        const userData = {
+          email,
+          password,
+          firstName: registerData.firstName,
+          lastName: registerData.lastName,
+          phone: registerData.phone,
+          role: selectedUserType.toUpperCase(),
+          ...(selectedUserType === 'student' && { studentId: registerData.studentId }),
+          ...(selectedUserType === 'college' && { collegeCode: registerData.collegeCode }),
+          ...(selectedUserType === 'university' && { universityCode: registerData.universityCode }),
+          ...(selectedUserType === 'recruiter' && { companyName: registerData.companyName })
+        };
+        
+        await register(userData);
+        toast.success("Registration successful! Please wait for admin approval.");
+        setIsRegistering(false);
+        setEmail("");
+        setPassword("");
+        setRegisterData({
+          firstName: "",
+          lastName: "",
+          phone: "",
+          studentId: "",
+          collegeCode: "",
+          universityCode: "",
+          companyName: ""
+        });
+      } catch (error: any) {
+        toast.error(error.message || "Registration failed");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -114,7 +177,7 @@ const Login = () => {
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleLogin} className="space-y-6">
+              <form onSubmit={isRegistering ? handleRegister : handleLogin} className="space-y-6">
                 {/* Selected User Type Display */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -127,7 +190,7 @@ const Login = () => {
                             <selectedUser.icon className="h-5 w-5 text-white" />
                           </div>
                           <div>
-                            <Badge variant="secondary">{selectedUser.label} Login</Badge>
+                            <Badge variant="secondary">{selectedUser.label} {isRegistering ? 'Registration' : 'Login'}</Badge>
                           </div>
                         </>
                       );
@@ -137,12 +200,113 @@ const Login = () => {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => setSelectedUserType("")}
+                    onClick={() => {
+                      setSelectedUserType("");
+                      setIsRegistering(false);
+                    }}
                     className="text-muted-foreground"
                   >
                     Change
                   </Button>
                 </div>
+
+                {/* Registration Fields */}
+                {isRegistering && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input
+                          id="firstName"
+                          placeholder="First name"
+                          value={registerData.firstName}
+                          onChange={(e) => setRegisterData(prev => ({ ...prev, firstName: e.target.value }))}
+                          required
+                          className="h-11"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input
+                          id="lastName"
+                          placeholder="Last name"
+                          value={registerData.lastName}
+                          onChange={(e) => setRegisterData(prev => ({ ...prev, lastName: e.target.value }))}
+                          required
+                          className="h-11"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone (Optional)</Label>
+                      <Input
+                        id="phone"
+                        placeholder="Phone number"
+                        value={registerData.phone}
+                        onChange={(e) => setRegisterData(prev => ({ ...prev, phone: e.target.value }))}
+                        className="h-11"
+                      />
+                    </div>
+
+                    {/* Role-specific fields */}
+                    {selectedUserType === 'student' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="studentId">Student ID</Label>
+                        <Input
+                          id="studentId"
+                          placeholder="Student ID"
+                          value={registerData.studentId}
+                          onChange={(e) => setRegisterData(prev => ({ ...prev, studentId: e.target.value }))}
+                          required
+                          className="h-11"
+                        />
+                      </div>
+                    )}
+
+                    {selectedUserType === 'college' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="collegeCode">College Code</Label>
+                        <Input
+                          id="collegeCode"
+                          placeholder="College Code"
+                          value={registerData.collegeCode}
+                          onChange={(e) => setRegisterData(prev => ({ ...prev, collegeCode: e.target.value }))}
+                          required
+                          className="h-11"
+                        />
+                      </div>
+                    )}
+
+                    {selectedUserType === 'university' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="universityCode">University Code</Label>
+                        <Input
+                          id="universityCode"
+                          placeholder="University Code"
+                          value={registerData.universityCode}
+                          onChange={(e) => setRegisterData(prev => ({ ...prev, universityCode: e.target.value }))}
+                          required
+                          className="h-11"
+                        />
+                      </div>
+                    )}
+
+                    {selectedUserType === 'recruiter' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="companyName">Company Name</Label>
+                        <Input
+                          id="companyName"
+                          placeholder="Company Name"
+                          value={registerData.companyName}
+                          onChange={(e) => setRegisterData(prev => ({ ...prev, companyName: e.target.value }))}
+                          required
+                          className="h-11"
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
 
                 {/* Email Input */}
                 <div className="space-y-2">
@@ -179,26 +343,42 @@ const Login = () => {
                 </div>
 
                 {/* Forgot Password */}
-                <div className="text-right">
-                  <Button variant="link" className="p-0 h-auto text-primary">
-                    Forgot Password?
-                  </Button>
-                </div>
+                {!isRegistering && (
+                  <div className="text-right">
+                    <Button variant="link" className="p-0 h-auto text-primary">
+                      Forgot Password?
+                    </Button>
+                  </div>
+                )}
 
-                {/* Login Button */}
+                {/* Submit Button */}
                 <Button 
                   type="submit" 
                   className="w-full h-11 bg-gradient-hero shadow-button hover:scale-105 transition-transform"
-                  disabled={!email || !password}
+                  disabled={!email || !password || (isRegistering && !registerData.firstName) || isLoading}
                 >
-                  Login to Dashboard
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {isRegistering ? 'Creating Account...' : 'Logging in...'}
+                    </>
+                  ) : (
+                    isRegistering ? 'Create Account' : 'Login to Dashboard'
+                  )}
                 </Button>
 
-                {/* Create Account */}
+                {/* Toggle between Login and Register */}
                 <div className="text-center pt-4 border-t">
-                  <p className="text-muted-foreground mb-2">Don't have an account?</p>
-                  <Button variant="outline" className="w-full">
-                    Create Account
+                  <p className="text-muted-foreground mb-2">
+                    {isRegistering ? 'Already have an account?' : "Don't have an account?"}
+                  </p>
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => setIsRegistering(!isRegistering)}
+                  >
+                    {isRegistering ? 'Login Instead' : 'Create Account'}
                   </Button>
                 </div>
               </form>
