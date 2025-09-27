@@ -95,7 +95,7 @@ const Login = () => {
       return;
     }
     
-    if (!/\S+@\S+\.\S+/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Please enter a valid email address");
       return;
     }
@@ -107,17 +107,13 @@ const Login = () => {
     
     setIsLoading(true);
     try {
-      const { error } = await login(email, password);
-      if (error) {
-        setError(error.message || "Login failed");
-        toast.error(error.message || "Login failed");
-      } else {
-        toast.success("Login successful!");
-        navigate(`/dashboard/${selectedUserType}`);
-      }
+      await login(email, password);
+      toast.success("Login successful!");
+      navigate(`/dashboard/${selectedUserType}`);
     } catch (error: any) {
-      setError(error.message || "Login failed");
-      toast.error(error.message || "Login failed");
+      const errorMessage = error.message || "Login failed. Please check your credentials.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
