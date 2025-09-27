@@ -1,21 +1,19 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import apiClient from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
+import { User, Session } from '@supabase/supabase-js';
 
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
+interface AuthUser extends User {
+  role?: string;
   profile?: any;
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
+  session: Session | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (userData: any) => Promise<void>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<{ error: any }>;
+  register: (userData: any) => Promise<{ error: any }>;
+  logout: () => Promise<void>;
   updateUser: (userData: any) => void;
 }
 
@@ -34,50 +32,74 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const response = await apiClient.getCurrentUser();
-          setUser(response.user);
-        } catch (error) {
-          console.error('Failed to get current user:', error);
-          apiClient.clearToken();
-        }
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
       }
-      setLoading(false);
-    };
+    );
 
-    initAuth();
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
-    try {
-      const response = await apiClient.login(email, password);
-      apiClient.setToken(response.token);
-      setUser(response.user);
-    } catch (error) {
-      throw error;
-    }
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { error };
   };
 
   const register = async (userData: any) => {
-    try {
-      const response = await apiClient.register(userData);
-      // Note: Registration doesn't automatically log in the user
-      // They need to verify their email or admin needs to activate their account
-    } catch (error) {
-      throw error;
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { error } = await supabase.auth.signUp({
+      email: userData.email,
+      password: userData.password,
+      options: {
+        emailRedirectTo: redirectUrl,
+        data: {
+          full_name: `${userData.firstName} ${userData.lastName}`,
+          role: userData.role?.toLowerCase() || 'student',
+          department: userData.department,
+        }
+      }
+    });
+    
+    // Create profile after signup
+    if (!error && userData.firstName && userData.lastName) {
+      setTimeout(async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('profiles').insert({
+            id: user.id,
+            full_name: `${userData.firstName} ${userData.lastName}`,
+            role: userData.role?.toLowerCase() || 'student',
+            department: userData.department,
+          });
+        }
+      }, 0);
     }
+    
+    return { error };
   };
 
-  const logout = () => {
-    apiClient.clearToken();
-    setUser(null);
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
   const updateUser = (userData: any) => {
@@ -86,6 +108,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const value: AuthContextType = {
     user,
+    session,
     loading,
     login,
     register,

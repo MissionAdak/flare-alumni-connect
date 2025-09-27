@@ -80,9 +80,13 @@ const Login = () => {
     if (selectedUserType && email && password) {
       setIsLoading(true);
       try {
-        await login(email, password);
-        toast.success("Login successful!");
-        navigate(`/dashboard/${selectedUserType}`);
+        const { error } = await login(email, password);
+        if (error) {
+          toast.error(error.message || "Login failed");
+        } else {
+          toast.success("Login successful!");
+          navigate(`/dashboard/${selectedUserType}`);
+        }
       } catch (error: any) {
         toast.error(error.message || "Login failed");
       } finally {
@@ -103,26 +107,27 @@ const Login = () => {
           lastName: registerData.lastName,
           phone: registerData.phone,
           role: selectedUserType.toUpperCase(),
-          ...(selectedUserType === 'student' && { studentId: registerData.studentId }),
-          ...(selectedUserType === 'college' && { collegeCode: registerData.collegeCode }),
-          ...(selectedUserType === 'university' && { universityCode: registerData.universityCode }),
-          ...(selectedUserType === 'recruiter' && { companyName: registerData.companyName })
+          department: registerData.studentId || registerData.collegeCode || registerData.universityCode || registerData.companyName,
         };
         
-        await register(userData);
-        toast.success("Registration successful! Please wait for admin approval.");
-        setIsRegistering(false);
-        setEmail("");
-        setPassword("");
-        setRegisterData({
-          firstName: "",
-          lastName: "",
-          phone: "",
-          studentId: "",
-          collegeCode: "",
-          universityCode: "",
-          companyName: ""
-        });
+        const { error } = await register(userData);
+        if (error) {
+          toast.error(error.message || "Registration failed");
+        } else {
+          toast.success("Registration successful! Please check your email to verify your account.");
+          setIsRegistering(false);
+          setEmail("");
+          setPassword("");
+          setRegisterData({
+            firstName: "",
+            lastName: "",
+            phone: "",
+            studentId: "",
+            collegeCode: "",
+            universityCode: "",
+            companyName: ""
+          });
+        }
       } catch (error: any) {
         toast.error(error.message || "Registration failed");
       } finally {
