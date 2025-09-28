@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import GoogleAuthCallback from "./pages/GoogleAuthCallback";
 import AlumniDashboard from "./pages/AlumniDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import CollegeDashboard from "./pages/CollegeDashboard";
@@ -26,6 +27,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<GoogleAuthCallback />} />
             <Route path="/dashboard/alumni" element={<ProtectedRoute><AlumniDashboard /></ProtectedRoute>} />
             <Route path="/dashboard/student" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
             <Route path="/dashboard/college" element={<ProtectedRoute><CollegeDashboard /></ProtectedRoute>} />

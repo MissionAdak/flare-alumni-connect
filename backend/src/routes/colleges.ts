@@ -7,9 +7,10 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // Get college dashboard data
-router.get('/dashboard', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest, res, next) => {
+router.get('/dashboard', requireRole(['COLLEGE_ADMIN']), async (req, res, next) => {
   try {
-    const userId = req.user!.id;
+    const authReq = req as AuthRequest;
+    const userId = authReq.user!.id;
     
     const college = await prisma.collegeProfile.findUnique({
       where: { userId },
@@ -86,8 +87,9 @@ router.get('/dashboard', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest
 });
 
 // Get students by criteria
-router.get('/students', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest, res, next) => {
+router.get('/students', requireRole(['COLLEGE_ADMIN']), async (req, res, next) => {
   try {
+    const authReq = req as AuthRequest;
     const { 
       year, 
       branch, 
@@ -97,10 +99,10 @@ router.get('/students', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest,
       internshipStatus,
       page = 1, 
       limit = 10 
-    } = req.query;
+    } = authReq.query;
 
     const college = await prisma.collegeProfile.findUnique({
-      where: { userId: req.user!.id }
+      where: { userId: authReq.user!.id }
     });
 
     if (!college) {
@@ -171,8 +173,9 @@ router.get('/students', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest,
 });
 
 // Get alumni by criteria
-router.get('/alumni', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest, res, next) => {
+router.get('/alumni', requireRole(['COLLEGE_ADMIN']), async (req, res, next) => {
   try {
+    const authReq = req as AuthRequest;
     const { 
       graduationYear, 
       branch, 
@@ -180,10 +183,10 @@ router.get('/alumni', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest, r
       experience,
       page = 1, 
       limit = 10 
-    } = req.query;
+    } = authReq.query;
 
     const college = await prisma.collegeProfile.findUnique({
-      where: { userId: req.user!.id }
+      where: { userId: authReq.user!.id }
     });
 
     if (!college) {

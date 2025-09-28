@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import Joi from 'joi';
 import { PrismaClient } from '@prisma/client';
+import googleAuthRoutes from './auth-google';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -225,5 +226,8 @@ router.get('/me', async (req, res, next) => {
     return next(error);
   }
 });
+
+// Google OAuth routes
+router.use('/google', googleAuthRoutes);
 
 export default router;

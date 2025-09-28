@@ -22,9 +22,10 @@ const upload = multer({
 });
 
 // Get alumni profile
-router.get('/profile', requireRole(['ALUMNI']), async (req: AuthRequest, res, next) => {
+router.get('/profile', requireRole(['ALUMNI']), async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
-    const userId = req.user!.id;
+    const userId = authReq.user!.id;
     
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -50,9 +51,10 @@ router.get('/profile', requireRole(['ALUMNI']), async (req: AuthRequest, res, ne
 });
 
 // Update alumni profile
-router.put('/profile', requireRole(['ALUMNI']), async (req: AuthRequest, res, next) => {
+router.put('/profile', requireRole(['ALUMNI']), async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
-    const userId = req.user!.id;
+    const userId = authReq.user!.id;
     const updateSchema = Joi.object({
       bio: Joi.string().optional(),
       currentPosition: Joi.string().optional(),
@@ -117,10 +119,11 @@ router.put('/profile', requireRole(['ALUMNI']), async (req: AuthRequest, res, ne
   }
 });
 
-// Upload mentorship video
-router.post('/videos', requireRole(['ALUMNI']), upload.single('video'), async (req: AuthRequest, res, next) => {
+// Upload video
+router.post('/videos', requireRole(['ALUMNI']), upload.single('video'), async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
-    const userId = req.user!.id;
+    const userId = authReq.user!.id;
     const { title, description, category, tags, youtubeUrl } = req.body;
 
     const videoSchema = Joi.object({
@@ -200,9 +203,10 @@ router.post('/videos', requireRole(['ALUMNI']), upload.single('video'), async (r
 });
 
 // Get alumni videos
-router.get('/videos', requireRole(['ALUMNI']), async (req: AuthRequest, res, next) => {
+router.get('/videos', requireRole(['ALUMNI']), async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
-    const userId = req.user!.id;
+    const userId = authReq.user!.id;
     const { page = 1, limit = 10 } = req.query;
 
     const videos = await prisma.video.findMany({
@@ -240,9 +244,10 @@ router.get('/videos', requireRole(['ALUMNI']), async (req: AuthRequest, res, nex
 });
 
 // Get mentorship sessions
-router.get('/mentorship-sessions', requireRole(['ALUMNI']), async (req: AuthRequest, res, next) => {
+router.get('/mentorship-sessions', requireRole(['ALUMNI']), async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
-    const userId = req.user!.id;
+    const userId = authReq.user!.id;
     const { status, page = 1, limit = 10 } = req.query;
 
     const whereClause: any = { mentorId: userId };
@@ -286,7 +291,7 @@ router.get('/mentorship-sessions', requireRole(['ALUMNI']), async (req: AuthRequ
 });
 
 // Get mentorship requests
-router.get('/mentorship-requests', requireRole(['ALUMNI']), async (req: AuthRequest, res, next) => {
+router.get('/mentorship-requests', requireRole(['ALUMNI']), async (req: Request, res, next) => {
   try {
     const userId = req.user!.id;
     const { status, page = 1, limit = 10 } = req.query;
@@ -339,7 +344,7 @@ router.get('/mentorship-requests', requireRole(['ALUMNI']), async (req: AuthRequ
 });
 
 // Accept/Reject mentorship request
-router.patch('/mentorship-requests/:requestId', requireRole(['ALUMNI']), async (req: AuthRequest, res, next) => {
+router.patch('/mentorship-requests/:requestId', requireRole(['ALUMNI']), async (req: Request, res, next) => {
   try {
     const { requestId } = req.params;
     const { status } = req.body;
@@ -374,7 +379,7 @@ router.patch('/mentorship-requests/:requestId', requireRole(['ALUMNI']), async (
 });
 
 // Get donation history
-router.get('/donations', requireRole(['ALUMNI']), async (req: AuthRequest, res, next) => {
+router.get('/donations', requireRole(['ALUMNI']), async (req: Request, res, next) => {
   try {
     const userId = req.user!.id;
     const { page = 1, limit = 10 } = req.query;
@@ -414,7 +419,7 @@ router.get('/donations', requireRole(['ALUMNI']), async (req: AuthRequest, res, 
 });
 
 // Get alumni analytics
-router.get('/analytics', requireRole(['ALUMNI']), async (req: AuthRequest, res, next) => {
+router.get('/analytics', requireRole(['ALUMNI']), async (req: Request, res, next) => {
   try {
     const userId = req.user!.id;
 

@@ -7,9 +7,10 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // Get university dashboard data
-router.get('/dashboard', requireRole(['UNIVERSITY_ADMIN']), async (req: AuthRequest, res, next) => {
+router.get('/dashboard', requireRole(['UNIVERSITY_ADMIN']), async (req, res, next) => {
   try {
-    const userId = req.user!.id;
+    const authReq = req as AuthRequest;
+    const userId = authReq.user!.id;
     
     const university = await prisma.universityProfile.findUnique({
       where: { userId },
@@ -106,12 +107,13 @@ router.get('/dashboard', requireRole(['UNIVERSITY_ADMIN']), async (req: AuthRequ
 });
 
 // Get college-wise data
-router.get('/colleges', requireRole(['UNIVERSITY_ADMIN']), async (req: AuthRequest, res, next) => {
+router.get('/colleges', requireRole(['UNIVERSITY_ADMIN']), async (req, res, next) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const authReq = req as AuthRequest;
+    const { page = 1, limit = 10 } = authReq.query;
 
     const university = await prisma.universityProfile.findUnique({
-      where: { userId: req.user!.id }
+      where: { userId: authReq.user!.id }
     });
 
     if (!university) {

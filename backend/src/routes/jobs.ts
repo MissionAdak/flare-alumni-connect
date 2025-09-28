@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest, requireRole } from '../middleware/auth';
 
@@ -6,7 +6,8 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // Get all published jobs
-router.get('/', async (req: AuthRequest, res, next) => {
+router.get('/', async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
     const { 
       skills, 
@@ -58,7 +59,7 @@ router.get('/', async (req: AuthRequest, res, next) => {
           }
         },
         applications: {
-          where: req.user ? { applicantId: req.user.id } : undefined,
+          where: authReq.user ? { applicantId: authReq.user.id } : undefined,
           select: { id: true, status: true }
         }
       }
@@ -83,7 +84,8 @@ router.get('/', async (req: AuthRequest, res, next) => {
 });
 
 // Get job by ID
-router.get('/:id', async (req: AuthRequest, res, next) => {
+router.get('/:id', async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
     const { id } = req.params;
 
@@ -100,7 +102,7 @@ router.get('/:id', async (req: AuthRequest, res, next) => {
           }
         },
         applications: {
-          where: req.user ? { applicantId: req.user.id } : undefined,
+          where: authReq.user ? { applicantId: authReq.user.id } : undefined,
           select: { id: true, status: true, createdAt: true }
         }
       }

@@ -33,6 +33,18 @@ const StudentDashboard = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      // Only fetch data if user is authenticated
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      // Check if user has the correct role for this dashboard
+      if (user.role && user.role.toLowerCase() !== 'student') {
+        console.warn(`User role '${user.role}' does not match dashboard 'student'`);
+        // Still allow access but show a warning
+      }
+
       try {
         setLoading(true);
         const [profileData, analyticsData, sessionsData, alumniData, jobsData] = await Promise.all([
@@ -49,6 +61,7 @@ const StudentDashboard = () => {
         setAlumni(alumniData.alumni);
         setJobs(jobsData.jobs);
       } catch (error: any) {
+        console.error('Failed to load dashboard data:', error);
         toast.error(error.message || "Failed to load dashboard data");
       } finally {
         setLoading(false);
@@ -56,7 +69,7 @@ const StudentDashboard = () => {
     };
 
     fetchData();
-  }, []);
+  }, [user]);
 
   const handleLogout = () => {
     logout();

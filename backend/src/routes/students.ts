@@ -7,7 +7,7 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // Get student profile
-router.get('/profile', requireRole(['STUDENT']), async (req: AuthRequest, res, next) => {
+router.get('/profile', requireRole(['STUDENT']), async (req: Request, res, next) => {
   try {
     const userId = req.user!.id;
     
@@ -43,7 +43,7 @@ router.get('/profile', requireRole(['STUDENT']), async (req: AuthRequest, res, n
 });
 
 // Update student profile
-router.put('/profile', requireRole(['STUDENT']), async (req: AuthRequest, res, next) => {
+router.put('/profile', requireRole(['STUDENT']), async (req: Request, res, next) => {
   try {
     const userId = req.user!.id;
     const updateSchema = Joi.object({
@@ -67,13 +67,13 @@ router.put('/profile', requireRole(['STUDENT']), async (req: AuthRequest, res, n
 
     // Update user data
     const updatedUser = await prisma.user.update({
-      where: { id: userId },
+      where: { id: authReq.user!.id },
       data: userData
     });
 
     // Update student profile
     const updatedProfile = await prisma.studentProfile.upsert({
-      where: { userId },
+      where: { userId: authReq.user!.id },
       update: {
         currentYear,
         currentSemester,
@@ -84,7 +84,7 @@ router.put('/profile', requireRole(['STUDENT']), async (req: AuthRequest, res, n
         placementPackage
       },
       create: {
-        userId,
+        userId: authReq.user!.id,
         studentId: `STU${Date.now()}`,
         currentYear: currentYear || 1,
         currentSemester: currentSemester || 1,
@@ -107,7 +107,8 @@ router.put('/profile', requireRole(['STUDENT']), async (req: AuthRequest, res, n
 });
 
 // Search alumni by skills and career path
-router.get('/search-alumni', requireRole(['STUDENT']), async (req: AuthRequest, res, next) => {
+router.get('/search-alumni', requireRole(['STUDENT']), async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
     const { skills, careerPath, page = 1, limit = 10 } = req.query;
 
@@ -182,7 +183,8 @@ router.get('/search-alumni', requireRole(['STUDENT']), async (req: AuthRequest, 
 });
 
 // View mentorship sessions/videos
-router.get('/mentorship-content', requireRole(['STUDENT']), async (req: AuthRequest, res, next) => {
+router.get('/mentorship-content', requireRole(['STUDENT']), async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
     const { category, page = 1, limit = 10 } = req.query;
 
@@ -232,7 +234,8 @@ router.get('/mentorship-content', requireRole(['STUDENT']), async (req: AuthRequ
 });
 
 // Request mentorship session
-router.post('/mentorship-requests', requireRole(['STUDENT']), async (req: AuthRequest, res, next) => {
+router.post('/mentorship-requests', requireRole(['STUDENT']), async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
     const { mentorId, message } = req.body;
 
@@ -303,12 +306,13 @@ router.post('/mentorship-requests', requireRole(['STUDENT']), async (req: AuthRe
 });
 
 // Get mentorship sessions (as mentee)
-router.get('/mentorship-sessions', requireRole(['STUDENT']), async (req: AuthRequest, res, next) => {
+router.get('/mentorship-sessions', requireRole(['STUDENT']), async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
-    const userId = req.user!.id;
+    const userId = authReq.user!.id;
     const { status, page = 1, limit = 10 } = req.query;
 
-    const whereClause: any = { menteeId: userId };
+    const whereClause: any = { menteeId: authReq.user!.id };
     if (status) {
       whereClause.status = status;
     }
@@ -351,7 +355,8 @@ router.get('/mentorship-sessions', requireRole(['STUDENT']), async (req: AuthReq
 });
 
 // Get job opportunities
-router.get('/jobs', requireRole(['STUDENT']), async (req: AuthRequest, res, next) => {
+router.get('/jobs', requireRole(['STUDENT']), async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
     const { skills, location, jobType, page = 1, limit = 10 } = req.query;
 
@@ -391,7 +396,7 @@ router.get('/jobs', requireRole(['STUDENT']), async (req: AuthRequest, res, next
           }
         },
         applications: {
-          where: { applicantId: req.user!.id },
+          where: { applicantId: authReq.user!.id },
           select: { id: true, status: true }
         }
       }
@@ -416,7 +421,8 @@ router.get('/jobs', requireRole(['STUDENT']), async (req: AuthRequest, res, next
 });
 
 // Apply for job
-router.post('/jobs/:jobId/apply', requireRole(['STUDENT']), async (req: AuthRequest, res, next) => {
+router.post('/jobs/:jobId/apply', requireRole(['STUDENT']), async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
     const { jobId } = req.params;
     const { coverLetter, resumeUrl } = req.body;
@@ -443,7 +449,7 @@ router.post('/jobs/:jobId/apply', requireRole(['STUDENT']), async (req: AuthRequ
     // Check if already applied
     const existingApplication = await prisma.jobApplication.findFirst({
       where: {
-        applicantId: req.user!.id,
+        applicantId: authReq.user!.id,
         jobId: jobId
       }
     });
@@ -454,7 +460,7 @@ router.post('/jobs/:jobId/apply', requireRole(['STUDENT']), async (req: AuthRequ
 
     const application = await prisma.jobApplication.create({
       data: {
-        applicantId: req.user!.id,
+        applicantId: authReq.user!.id,
         jobId: jobId,
         coverLetter: value.coverLetter,
         resumeUrl: value.resumeUrl
@@ -471,9 +477,10 @@ router.post('/jobs/:jobId/apply', requireRole(['STUDENT']), async (req: AuthRequ
 });
 
 // Get student analytics
-router.get('/analytics', requireRole(['STUDENT']), async (req: AuthRequest, res, next) => {
+router.get('/analytics', requireRole(['STUDENT']), async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
-    const userId = req.user!.id;
+    const userId = authReq.user!.id;
 
     const [
       totalMentorshipRequests,

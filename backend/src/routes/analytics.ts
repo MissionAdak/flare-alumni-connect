@@ -6,9 +6,10 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // Get system analytics (for admin)
-router.get('/system', requireRole(['COLLEGE_ADMIN', 'UNIVERSITY_ADMIN']), async (req: AuthRequest, res, next) => {
+router.get('/system', requireRole(['COLLEGE_ADMIN', 'UNIVERSITY_ADMIN']), async (req, res, next) => {
   try {
-    const { startDate, endDate } = req.query;
+    const authReq = req as AuthRequest;
+    const { startDate, endDate } = authReq.query;
 
     const dateFilter: any = {};
     if (startDate) {
@@ -93,10 +94,11 @@ router.get('/system', requireRole(['COLLEGE_ADMIN', 'UNIVERSITY_ADMIN']), async 
 });
 
 // Get user analytics
-router.get('/user/:userId', requireRole(['COLLEGE_ADMIN', 'UNIVERSITY_ADMIN']), async (req: AuthRequest, res, next) => {
+router.get('/user/:userId', requireRole(['COLLEGE_ADMIN', 'UNIVERSITY_ADMIN']), async (req, res, next) => {
   try {
-    const { userId } = req.params;
-    const { startDate, endDate } = req.query;
+    const authReq = req as AuthRequest;
+    const { userId } = authReq.params;
+    const { startDate, endDate } = authReq.query;
 
     const dateFilter: any = {};
     if (startDate) {

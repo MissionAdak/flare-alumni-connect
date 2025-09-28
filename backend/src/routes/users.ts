@@ -7,9 +7,10 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // Get user profile
-router.get('/profile', async (req: AuthRequest, res, next) => {
+router.get('/profile', async (req, res, next) => {
   try {
-    const userId = req.user!.id;
+    const authReq = req as AuthRequest;
+    const userId = authReq.user!.id;
     
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -33,9 +34,10 @@ router.get('/profile', async (req: AuthRequest, res, next) => {
 });
 
 // Update user profile
-router.put('/profile', async (req: AuthRequest, res, next) => {
+router.put('/profile', async (req, res, next) => {
   try {
-    const userId = req.user!.id;
+    const authReq = req as AuthRequest;
+    const userId = authReq.user!.id;
     const updateSchema = Joi.object({
       firstName: Joi.string().min(2).optional(),
       lastName: Joi.string().min(2).optional(),
@@ -73,10 +75,11 @@ router.put('/profile', async (req: AuthRequest, res, next) => {
 });
 
 // Get user dashboard data
-router.get('/dashboard', async (req: AuthRequest, res, next) => {
+router.get('/dashboard', async (req, res, next) => {
+  const authReq = req as AuthRequest;
   try {
-    const userId = req.user!.id;
-    const userRole = req.user!.role;
+    const userId = authReq.user!.id;
+    const userRole = authReq.user!.role;
 
     let dashboardData: any = {};
 

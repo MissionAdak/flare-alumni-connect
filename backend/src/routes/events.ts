@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest, requireRole } from '../middleware/auth';
 import Joi from 'joi';
@@ -7,7 +7,8 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // Get all public events
-router.get('/', async (req: AuthRequest, res, next) => {
+router.get('/', async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
     const { status, page = 1, limit = 10 } = req.query;
 
@@ -66,7 +67,8 @@ router.get('/', async (req: AuthRequest, res, next) => {
 });
 
 // Get event by ID
-router.get('/:id', async (req: AuthRequest, res, next) => {
+router.get('/:id', async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
     const { id } = req.params;
 
@@ -107,7 +109,8 @@ router.get('/:id', async (req: AuthRequest, res, next) => {
 });
 
 // Register for event
-router.post('/:id/register', requireRole(['STUDENT', 'ALUMNI']), async (req: AuthRequest, res, next) => {
+router.post('/:id/register', requireRole(['STUDENT', 'ALUMNI']), async (req: Request, res, next) => {
+  const authReq = req as AuthRequest;
   try {
     const { id } = req.params;
 
@@ -126,7 +129,7 @@ router.post('/:id/register', requireRole(['STUDENT', 'ALUMNI']), async (req: Aut
     // Check if already registered
     const existingRegistration = await prisma.eventRegistration.findFirst({
       where: {
-        userId: req.user!.id,
+        userId: authReq.user!.id,
         eventId: id
       }
     });
@@ -148,7 +151,7 @@ router.post('/:id/register', requireRole(['STUDENT', 'ALUMNI']), async (req: Aut
 
     const registration = await prisma.eventRegistration.create({
       data: {
-        userId: req.user!.id,
+        userId: authReq.user!.id,
         eventId: id
       },
       include: {
