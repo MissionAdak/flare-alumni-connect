@@ -26,9 +26,9 @@ router.get('/profile', async (req: AuthRequest, res, next) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({ user });
+    return res.json({ user });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -63,12 +63,12 @@ router.put('/profile', async (req: AuthRequest, res, next) => {
       data: value
     });
 
-    res.json({
+    return res.json({
       message: 'Profile updated successfully',
       user: updatedUser
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -142,22 +142,19 @@ router.get('/dashboard', async (req: AuthRequest, res, next) => {
         });
 
         if (university) {
-          const [universityStudents, universityAlumni, universityColleges] = await Promise.all([
+          const [universityStudents, universityAlumni] = await Promise.all([
             prisma.user.count({
               where: { role: 'STUDENT', university: university.universityName }
             }),
             prisma.user.count({
               where: { role: 'ALUMNI', university: university.universityName }
-            }),
-            prisma.collegeProfile.count({
-              where: { universityName: university.universityName }
             })
           ]);
 
           dashboardData = {
             totalStudents: universityStudents,
             totalAlumni: universityAlumni,
-            totalColleges: universityColleges
+            totalColleges: 0 // TODO: Implement proper college-university relationship
           };
         }
         break;
@@ -177,9 +174,9 @@ router.get('/dashboard', async (req: AuthRequest, res, next) => {
         break;
     }
 
-    res.json({ dashboardData });
+    return res.json({ dashboardData });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

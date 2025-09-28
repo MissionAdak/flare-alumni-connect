@@ -1,6 +1,6 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import Joi from 'joi';
 import { PrismaClient } from '@prisma/client';
 
@@ -104,7 +104,7 @@ router.post('/register', async (req, res, next) => {
       });
     }
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'User registered successfully',
       user: {
         id: user.id,
@@ -115,7 +115,7 @@ router.post('/register', async (req, res, next) => {
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -160,10 +160,10 @@ router.post('/login', async (req, res, next) => {
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as SignOptions
     );
 
-    res.json({
+    return res.json({
       message: 'Login successful',
       token,
       user: {
@@ -178,7 +178,7 @@ router.post('/login', async (req, res, next) => {
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -209,7 +209,7 @@ router.get('/me', async (req, res, next) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({
+    return res.json({
       user: {
         id: user.id,
         email: user.email,
@@ -222,7 +222,7 @@ router.get('/me', async (req, res, next) => {
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

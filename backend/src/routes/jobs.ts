@@ -68,7 +68,7 @@ router.get('/', async (req: AuthRequest, res, next) => {
       where: whereClause
     });
 
-    res.json({
+    return res.json({
       jobs,
       pagination: {
         page: Number(page),
@@ -78,7 +78,7 @@ router.get('/', async (req: AuthRequest, res, next) => {
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -110,9 +110,9 @@ router.get('/:id', async (req: AuthRequest, res, next) => {
       return res.status(404).json({ message: 'Job not found' });
     }
 
-    res.json({ job });
+    return res.json({ job });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

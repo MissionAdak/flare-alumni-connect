@@ -22,12 +22,8 @@ router.get('/profile', requireRole(['STUDENT']), async (req: AuthRequest, res, n
                 firstName: true,
                 lastName: true,
                 profileImage: true,
-                alumniProfile: {
-                  select: {
-                    currentPosition: true,
-                    company: true
-                  }
-                }
+                currentPosition: true,
+                company: true
               }
             }
           },
@@ -40,9 +36,9 @@ router.get('/profile', requireRole(['STUDENT']), async (req: AuthRequest, res, n
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({ user });
+    return res.json({ user });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -100,13 +96,13 @@ router.put('/profile', requireRole(['STUDENT']), async (req: AuthRequest, res, n
       }
     });
 
-    res.json({
+    return res.json({
       message: 'Profile updated successfully',
       user: updatedUser,
       profile: updatedProfile
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -171,7 +167,7 @@ router.get('/search-alumni', requireRole(['STUDENT']), async (req: AuthRequest, 
       where: whereClause
     });
 
-    res.json({
+    return res.json({
       alumni,
       pagination: {
         page: Number(page),
@@ -181,7 +177,7 @@ router.get('/search-alumni', requireRole(['STUDENT']), async (req: AuthRequest, 
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -221,7 +217,7 @@ router.get('/mentorship-content', requireRole(['STUDENT']), async (req: AuthRequ
       where: whereClause
     });
 
-    res.json({
+    return res.json({
       videos,
       pagination: {
         page: Number(page),
@@ -231,7 +227,7 @@ router.get('/mentorship-content', requireRole(['STUDENT']), async (req: AuthRequ
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -297,12 +293,12 @@ router.post('/mentorship-requests', requireRole(['STUDENT']), async (req: AuthRe
       }
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Mentorship request sent successfully',
       request
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -340,7 +336,7 @@ router.get('/mentorship-sessions', requireRole(['STUDENT']), async (req: AuthReq
       where: whereClause
     });
 
-    res.json({
+    return res.json({
       sessions,
       pagination: {
         page: Number(page),
@@ -350,7 +346,7 @@ router.get('/mentorship-sessions', requireRole(['STUDENT']), async (req: AuthReq
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -405,7 +401,7 @@ router.get('/jobs', requireRole(['STUDENT']), async (req: AuthRequest, res, next
       where: whereClause
     });
 
-    res.json({
+    return res.json({
       jobs,
       pagination: {
         page: Number(page),
@@ -415,7 +411,7 @@ router.get('/jobs', requireRole(['STUDENT']), async (req: AuthRequest, res, next
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -465,12 +461,12 @@ router.post('/jobs/:jobId/apply', requireRole(['STUDENT']), async (req: AuthRequ
       }
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Application submitted successfully',
       application
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -505,7 +501,7 @@ router.get('/analytics', requireRole(['STUDENT']), async (req: AuthRequest, res,
       })
     ]);
 
-    res.json({
+    return res.json({
       totalMentorshipRequests,
       acceptedRequests,
       completedSessions,
@@ -514,7 +510,7 @@ router.get('/analytics', requireRole(['STUDENT']), async (req: AuthRequest, res,
       recentActivity
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

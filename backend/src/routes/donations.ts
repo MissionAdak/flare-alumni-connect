@@ -58,7 +58,7 @@ router.post('/create-order', requireRole(['ALUMNI']), async (req: AuthRequest, r
       }
     });
 
-    res.json({
+    return res.json({
       message: 'Order created successfully',
       order: {
         id: order.id,
@@ -69,7 +69,7 @@ router.post('/create-order', requireRole(['ALUMNI']), async (req: AuthRequest, r
       donation
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -100,9 +100,18 @@ router.post('/verify-payment', requireRole(['ALUMNI']), async (req: AuthRequest,
       return res.status(400).json({ message: 'Invalid signature' });
     }
 
+    // Find donation by razorpayOrderId first
+    const existingDonation = await prisma.donation.findFirst({
+      where: { razorpayOrderId: orderId }
+    });
+
+    if (!existingDonation) {
+      return res.status(404).json({ message: 'Donation not found' });
+    }
+
     // Update donation status
     const donation = await prisma.donation.update({
-      where: { razorpayOrderId: orderId },
+      where: { id: existingDonation.id },
       data: {
         status: 'COMPLETED',
         razorpayPaymentId: paymentId,
@@ -110,12 +119,12 @@ router.post('/verify-payment', requireRole(['ALUMNI']), async (req: AuthRequest,
       }
     });
 
-    res.json({
+    return res.json({
       message: 'Payment verified successfully',
       donation
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -143,7 +152,7 @@ router.get('/history', requireRole(['ALUMNI']), async (req: AuthRequest, res, ne
       _sum: { amount: true }
     });
 
-    res.json({
+    return res.json({
       donations,
       totalDonated: totalDonated._sum.amount || 0,
       pagination: {
@@ -154,7 +163,7 @@ router.get('/history', requireRole(['ALUMNI']), async (req: AuthRequest, res, ne
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -209,14 +218,14 @@ router.get('/statistics', requireRole(['COLLEGE_ADMIN', 'UNIVERSITY_ADMIN']), as
       })
     ]);
 
-    res.json({
+    return res.json({
       totalDonations,
       totalAmount: totalAmount._sum.amount || 0,
       donationsByPurpose,
       recentDonations
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

@@ -41,7 +41,7 @@ router.get('/', async (req: AuthRequest, res, next) => {
       where: whereClause
     });
 
-    res.json({
+    return res.json({
       videos,
       pagination: {
         page: Number(page),
@@ -51,7 +51,7 @@ router.get('/', async (req: AuthRequest, res, next) => {
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -87,9 +87,9 @@ router.get('/:id', async (req: AuthRequest, res, next) => {
       data: { views: { increment: 1 } }
     });
 
-    res.json({ video });
+    return res.json({ video });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -111,12 +111,12 @@ router.post('/:id/like', requireRole(['STUDENT', 'ALUMNI']), async (req: AuthReq
       data: { likes: { increment: 1 } }
     });
 
-    res.json({
+    return res.json({
       message: 'Video liked successfully',
       likes: updatedVideo.likes
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

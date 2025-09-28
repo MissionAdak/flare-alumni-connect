@@ -100,9 +100,9 @@ router.get('/:id', async (req: AuthRequest, res, next) => {
       return res.status(404).json({ message: 'Event not found' });
     }
 
-    res.json({ event });
+    return res.json({ event });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -163,12 +163,12 @@ router.post('/:id/register', requireRole(['STUDENT', 'ALUMNI']), async (req: Aut
       }
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Successfully registered for event',
       registration
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -192,11 +192,11 @@ router.delete('/:id/register', requireRole(['STUDENT', 'ALUMNI']), async (req: A
       where: { id: registration.id }
     });
 
-    res.json({
+    return res.json({
       message: 'Registration cancelled successfully'
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

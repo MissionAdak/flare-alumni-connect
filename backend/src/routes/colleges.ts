@@ -67,7 +67,7 @@ router.get('/dashboard', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest
       student.studentProfile?.internshipStatus === 'completed'
     ).length;
 
-    res.json({
+    return res.json({
       college,
       statistics: {
         totalStudents,
@@ -81,7 +81,7 @@ router.get('/dashboard', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest
       alumni: alumniStats
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -156,7 +156,7 @@ router.get('/students', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest,
       where: whereClause
     });
 
-    res.json({
+    return res.json({
       students,
       pagination: {
         page: Number(page),
@@ -166,7 +166,7 @@ router.get('/students', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest,
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -225,7 +225,7 @@ router.get('/alumni', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest, r
       where: whereClause
     });
 
-    res.json({
+    return res.json({
       alumni,
       pagination: {
         page: Number(page),
@@ -235,7 +235,7 @@ router.get('/alumni', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest, r
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -267,12 +267,12 @@ router.post('/events', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest, 
       }
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Event created successfully',
       event
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -311,7 +311,7 @@ router.get('/events', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest, r
       where: whereClause
     });
 
-    res.json({
+    return res.json({
       events,
       pagination: {
         page: Number(page),
@@ -321,7 +321,7 @@ router.get('/events', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest, r
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -363,12 +363,12 @@ router.put('/events/:eventId', requireRole(['COLLEGE_ADMIN']), async (req: AuthR
       data: value
     });
 
-    res.json({
+    return res.json({
       message: 'Event updated successfully',
       event: updatedEvent
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -432,7 +432,7 @@ router.get('/naac-data', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest
       branchStats[branch].averageCGPA = branchStats[branch].averageCGPA / branchStats[branch].total;
     });
 
-    res.json({
+    return res.json({
       college: {
         name: college.collegeName,
         naacGrade: college.naacGrade,
@@ -448,7 +448,7 @@ router.get('/naac-data', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -504,7 +504,7 @@ router.get('/analytics', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest
       })
     ]);
 
-    res.json({
+    return res.json({
       totalStudents,
       totalAlumni,
       totalEvents,
@@ -512,7 +512,7 @@ router.get('/analytics', requireRole(['COLLEGE_ADMIN']), async (req: AuthRequest
       recentActivity
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

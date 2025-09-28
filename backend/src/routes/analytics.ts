@@ -75,7 +75,7 @@ router.get('/system', requireRole(['COLLEGE_ADMIN', 'UNIVERSITY_ADMIN']), async 
       return acc;
     }, {} as any);
 
-    res.json({
+    return res.json({
       overview: {
         totalUsers,
         activeUsers,
@@ -88,7 +88,7 @@ router.get('/system', requireRole(['COLLEGE_ADMIN', 'UNIVERSITY_ADMIN']), async 
       roleDistribution
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -175,7 +175,7 @@ router.get('/user/:userId', requireRole(['COLLEGE_ADMIN', 'UNIVERSITY_ADMIN']), 
       })
     ]);
 
-    res.json({
+    return res.json({
       user,
       statistics: {
         videos,
@@ -187,7 +187,7 @@ router.get('/user/:userId', requireRole(['COLLEGE_ADMIN', 'UNIVERSITY_ADMIN']), 
       analytics
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

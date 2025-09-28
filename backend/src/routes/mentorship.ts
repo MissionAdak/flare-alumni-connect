@@ -69,12 +69,12 @@ router.post('/sessions', requireRole(['ALUMNI']), async (req: AuthRequest, res, 
       }
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Mentorship session scheduled successfully',
       session
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -125,12 +125,12 @@ router.put('/sessions/:sessionId', requireRole(['ALUMNI']), async (req: AuthRequ
       }
     });
 
-    res.json({
+    return res.json({
       message: 'Session updated successfully',
       session: updatedSession
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -182,7 +182,7 @@ router.get('/sessions', requireRole(['STUDENT', 'ALUMNI']), async (req: AuthRequ
       where: whereClause
     });
 
-    res.json({
+    return res.json({
       sessions,
       pagination: {
         page: Number(page),
@@ -192,7 +192,7 @@ router.get('/sessions', requireRole(['STUDENT', 'ALUMNI']), async (req: AuthRequ
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

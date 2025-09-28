@@ -39,9 +39,9 @@ router.get('/profile', requireRole(['RECRUITER']), async (req: AuthRequest, res,
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({ user });
+    return res.json({ user });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -84,13 +84,13 @@ router.put('/profile', requireRole(['RECRUITER']), async (req: AuthRequest, res,
       }
     });
 
-    res.json({
+    return res.json({
       message: 'Profile updated successfully',
       user: updatedUser,
       profile: updatedProfile
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -157,7 +157,7 @@ router.get('/students', requireRole(['RECRUITER']), async (req: AuthRequest, res
       where: whereClause
     });
 
-    res.json({
+    return res.json({
       students,
       pagination: {
         page: Number(page),
@@ -167,7 +167,7 @@ router.get('/students', requireRole(['RECRUITER']), async (req: AuthRequest, res
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -200,12 +200,12 @@ router.post('/jobs', requireRole(['RECRUITER']), async (req: AuthRequest, res, n
       }
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Job posted successfully',
       job
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -236,12 +236,11 @@ router.get('/jobs', requireRole(['RECRUITER']), async (req: AuthRequest, res, ne
                 cgpa: true,
                 skills: true,
                 studentProfile: {
-                  select: {
-                    currentYear: true,
-                    branch: true,
-                    placementStatus: true
-                  }
-                }
+              select: {
+                currentYear: true,
+                placementStatus: true
+              }
+            }
               }
             }
           }
@@ -253,7 +252,7 @@ router.get('/jobs', requireRole(['RECRUITER']), async (req: AuthRequest, res, ne
       where: whereClause
     });
 
-    res.json({
+    return res.json({
       jobs,
       pagination: {
         page: Number(page),
@@ -263,7 +262,7 @@ router.get('/jobs', requireRole(['RECRUITER']), async (req: AuthRequest, res, ne
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -306,12 +305,12 @@ router.put('/jobs/:jobId', requireRole(['RECRUITER']), async (req: AuthRequest, 
       data: value
     });
 
-    res.json({
+    return res.json({
       message: 'Job updated successfully',
       job: updatedJob
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -373,7 +372,7 @@ router.get('/jobs/:jobId/applications', requireRole(['RECRUITER']), async (req: 
       where: whereClause
     });
 
-    res.json({
+    return res.json({
       applications,
       pagination: {
         page: Number(page),
@@ -383,7 +382,7 @@ router.get('/jobs/:jobId/applications', requireRole(['RECRUITER']), async (req: 
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -416,12 +415,12 @@ router.patch('/applications/:applicationId', requireRole(['RECRUITER']), async (
       data: { status }
     });
 
-    res.json({
+    return res.json({
       message: 'Application status updated successfully',
       application: updatedApplication
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -455,14 +454,14 @@ router.get('/analytics', requireRole(['RECRUITER']), async (req: AuthRequest, re
       })
     ]);
 
-    res.json({
+    return res.json({
       totalJobs,
       totalApplications,
       acceptedApplications,
       recentActivity
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -493,9 +492,9 @@ router.get('/alumni-dashboard', requireRole(['RECRUITER']), async (req: AuthRequ
       }
     });
 
-    res.json({ user });
+    return res.json({ user });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

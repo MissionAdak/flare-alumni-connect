@@ -31,7 +31,9 @@ router.get('/dashboard', requireRole(['UNIVERSITY_ADMIN']), async (req: AuthRequ
     // Get aggregated data from all colleges
     const colleges = await prisma.collegeProfile.findMany({
       where: {
-        universityName: university.universityName
+        user: {
+          university: university.universityName
+        }
       },
       include: {
         user: {
@@ -85,7 +87,7 @@ router.get('/dashboard', requireRole(['UNIVERSITY_ADMIN']), async (req: AuthRequ
       .reduce((sum, student) => sum + (student.studentProfile?.placementPackage || 0), 0) / 
       students.filter(student => student.studentProfile?.placementPackage).length || 0;
 
-    res.json({
+    return res.json({
       university,
       colleges,
       statistics: {
@@ -99,7 +101,7 @@ router.get('/dashboard', requireRole(['UNIVERSITY_ADMIN']), async (req: AuthRequ
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -118,7 +120,9 @@ router.get('/colleges', requireRole(['UNIVERSITY_ADMIN']), async (req: AuthReque
 
     const colleges = await prisma.collegeProfile.findMany({
       where: {
-        universityName: university.universityName
+        user: {
+          university: university.universityName
+        }
       },
       include: {
         user: {
@@ -179,11 +183,13 @@ router.get('/colleges', requireRole(['UNIVERSITY_ADMIN']), async (req: AuthReque
 
     const total = await prisma.collegeProfile.count({
       where: {
-        universityName: university.universityName
+        user: {
+          university: university.universityName
+        }
       }
     });
 
-    res.json({
+    return res.json({
       colleges: collegesWithStats,
       pagination: {
         page: Number(page),
@@ -193,7 +199,7 @@ router.get('/colleges', requireRole(['UNIVERSITY_ADMIN']), async (req: AuthReque
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -336,9 +342,9 @@ router.get('/reports', requireRole(['UNIVERSITY_ADMIN']), async (req: AuthReques
         return res.status(400).json({ message: 'Invalid report type' });
     }
 
-    res.json(reportData);
+    return res.json(reportData);
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -375,7 +381,9 @@ router.get('/analytics', requireRole(['UNIVERSITY_ADMIN']), async (req: AuthRequ
       }),
       prisma.collegeProfile.count({
         where: {
-          universityName: university.universityName
+          user: {
+            university: university.universityName
+          }
         }
       }),
       prisma.event.count({
@@ -404,7 +412,7 @@ router.get('/analytics', requireRole(['UNIVERSITY_ADMIN']), async (req: AuthRequ
       })
     ]);
 
-    res.json({
+    return res.json({
       totalStudents,
       totalAlumni,
       totalColleges,
@@ -413,7 +421,7 @@ router.get('/analytics', requireRole(['UNIVERSITY_ADMIN']), async (req: AuthRequ
       recentActivity
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

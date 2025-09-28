@@ -43,9 +43,9 @@ router.get('/profile', requireRole(['ALUMNI']), async (req: AuthRequest, res, ne
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({ user });
+    return res.json({ user });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -86,34 +86,34 @@ router.put('/profile', requireRole(['ALUMNI']), async (req: AuthRequest, res, ne
     });
 
     // Update alumni profile
-    const updatedProfile = await prisma.alumniProfile.upsert({
-      where: { userId },
-      update: {
-        careerJourney: careerJourney ? JSON.stringify(careerJourney) : undefined,
-        achievements,
-        certifications,
-        socialLinks: socialLinks ? JSON.stringify(socialLinks) : undefined,
-        isAvailableForMentorship,
-        mentorshipRate
-      },
-      create: {
-        userId,
-        careerJourney: careerJourney ? JSON.stringify(careerJourney) : null,
-        achievements: achievements || [],
-        certifications: certifications || [],
-        socialLinks: socialLinks ? JSON.stringify(socialLinks) : null,
-        isAvailableForMentorship: isAvailableForMentorship ?? true,
-        mentorshipRate
-      }
-    });
+      const updatedProfile = await prisma.alumniProfile.upsert({
+        where: { userId },
+        update: {
+          careerJourney: careerJourney || undefined,
+          achievements,
+          certifications,
+          socialLinks: socialLinks || undefined,
+          isAvailableForMentorship,
+          mentorshipRate
+        },
+        create: {
+          userId,
+          careerJourney: careerJourney || null,
+          achievements: achievements || [],
+          certifications: certifications || [],
+          socialLinks: socialLinks || null,
+          isAvailableForMentorship: isAvailableForMentorship ?? true,
+          mentorshipRate
+        }
+      });
 
-    res.json({
+    return res.json({
       message: 'Profile updated successfully',
       user: updatedUser,
       profile: updatedProfile
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -141,18 +141,23 @@ router.post('/videos', requireRole(['ALUMNI']), upload.single('video'), async (r
 
     // If file is uploaded, upload to Cloudinary
     if (req.file) {
-      const result = await cloudinary.uploader.upload_stream(
-        {
-          resource_type: 'video',
-          folder: 'flare-alumni/videos',
-          transformation: [
-            { width: 1280, height: 720, crop: 'limit' }
-          ]
-        },
-        (error, result) => {
-          if (error) throw error;
-        }
-      ).end(req.file.buffer);
+      const fileBuffer = req.file.buffer;
+      const result = await new Promise<any>((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: 'video',
+            folder: 'flare-alumni/videos',
+            transformation: [
+              { width: 1280, height: 720, crop: 'limit' }
+            ]
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(fileBuffer);
+      });
 
       cloudinaryUrl = result.secure_url;
       
@@ -185,12 +190,12 @@ router.post('/videos', requireRole(['ALUMNI']), upload.single('video'), async (r
       }
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Video uploaded successfully',
       video
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -220,7 +225,7 @@ router.get('/videos', requireRole(['ALUMNI']), async (req: AuthRequest, res, nex
       where: { authorId: userId }
     });
 
-    res.json({
+    return res.json({
       videos,
       pagination: {
         page: Number(page),
@@ -230,7 +235,7 @@ router.get('/videos', requireRole(['ALUMNI']), async (req: AuthRequest, res, nex
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -266,7 +271,7 @@ router.get('/mentorship-sessions', requireRole(['ALUMNI']), async (req: AuthRequ
       where: whereClause
     });
 
-    res.json({
+    return res.json({
       sessions,
       pagination: {
         page: Number(page),
@@ -276,7 +281,7 @@ router.get('/mentorship-sessions', requireRole(['ALUMNI']), async (req: AuthRequ
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -303,11 +308,11 @@ router.get('/mentorship-requests', requireRole(['ALUMNI']), async (req: AuthRequ
             lastName: true,
             email: true,
             profileImage: true,
+            branch: true,
             studentProfile: {
               select: {
                 studentId: true,
-                currentYear: true,
-                branch: true
+                currentYear: true
               }
             }
           }
@@ -319,7 +324,7 @@ router.get('/mentorship-requests', requireRole(['ALUMNI']), async (req: AuthRequ
       where: whereClause
     });
 
-    res.json({
+    return res.json({
       requests,
       pagination: {
         page: Number(page),
@@ -329,7 +334,7 @@ router.get('/mentorship-requests', requireRole(['ALUMNI']), async (req: AuthRequ
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -359,12 +364,12 @@ router.patch('/mentorship-requests/:requestId', requireRole(['ALUMNI']), async (
       data: { status }
     });
 
-    res.json({
+    return res.json({
       message: 'Request updated successfully',
       request: updatedRequest
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -393,7 +398,7 @@ router.get('/donations', requireRole(['ALUMNI']), async (req: AuthRequest, res, 
       _sum: { amount: true }
     });
 
-    res.json({
+    return res.json({
       donations,
       totalDonated: totalDonated._sum.amount || 0,
       pagination: {
@@ -404,7 +409,7 @@ router.get('/donations', requireRole(['ALUMNI']), async (req: AuthRequest, res, 
       }
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -441,7 +446,7 @@ router.get('/analytics', requireRole(['ALUMNI']), async (req: AuthRequest, res, 
       })
     ]);
 
-    res.json({
+    return res.json({
       totalVideos,
       totalViews: totalViews._sum.views || 0,
       totalSessions,
@@ -450,7 +455,7 @@ router.get('/analytics', requireRole(['ALUMNI']), async (req: AuthRequest, res, 
       recentActivity
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
