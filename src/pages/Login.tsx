@@ -13,7 +13,10 @@ import {
   Mail,
   Lock,
   ArrowLeft,
-  Loader2
+  Loader2,
+  Eye,
+  EyeOff,
+  AlertCircle
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,8 +26,10 @@ const Login = () => {
   const [selectedUserType, setSelectedUserType] = useState<string>("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [error, setError] = useState("");
   const [registerData, setRegisterData] = useState({
     firstName: "",
     lastName: "",
@@ -77,17 +82,40 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedUserType && email && password) {
-      setIsLoading(true);
-      try {
-        await login(email, password);
-        toast.success("Login successful!");
-        navigate(`/dashboard/${selectedUserType}`);
-      } catch (error: any) {
-        toast.error(error.message || "Login failed");
-      } finally {
-        setIsLoading(false);
-      }
+    setError("");
+    
+    // Validation
+    if (!selectedUserType) {
+      setError("Please select your account type");
+      return;
+    }
+    
+    if (!email || !password) {
+      setError("Please fill in all fields");
+      return;
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      await login(email, password);
+      toast.success("Login successful!");
+      navigate(`/dashboard/${selectedUserType}`);
+    } catch (error: any) {
+      const errorMessage = error.message || "Login failed. Please check your credentials.";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -103,26 +131,27 @@ const Login = () => {
           lastName: registerData.lastName,
           phone: registerData.phone,
           role: selectedUserType.toUpperCase(),
-          ...(selectedUserType === 'student' && { studentId: registerData.studentId }),
-          ...(selectedUserType === 'college' && { collegeCode: registerData.collegeCode }),
-          ...(selectedUserType === 'university' && { universityCode: registerData.universityCode }),
-          ...(selectedUserType === 'recruiter' && { companyName: registerData.companyName })
+          department: registerData.studentId || registerData.collegeCode || registerData.universityCode || registerData.companyName,
         };
         
-        await register(userData);
-        toast.success("Registration successful! Please wait for admin approval.");
-        setIsRegistering(false);
-        setEmail("");
-        setPassword("");
-        setRegisterData({
-          firstName: "",
-          lastName: "",
-          phone: "",
-          studentId: "",
-          collegeCode: "",
-          universityCode: "",
-          companyName: ""
-        });
+        const { error } = await register(userData);
+        if (error) {
+          toast.error(error.message || "Registration failed");
+        } else {
+          toast.success("Registration successful! Please check your email to verify your account.");
+          setIsRegistering(false);
+          setEmail("");
+          setPassword("");
+          setRegisterData({
+            firstName: "",
+            lastName: "",
+            phone: "",
+            studentId: "",
+            collegeCode: "",
+            universityCode: "",
+            companyName: ""
+          });
+        }
       } catch (error: any) {
         toast.error(error.message || "Registration failed");
       } finally {
@@ -319,7 +348,10 @@ const Login = () => {
                     type="email"
                     placeholder="Enter your email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (error) setError("");
+                    }}
                     required
                     className="h-11"
                   />
@@ -331,16 +363,48 @@ const Login = () => {
                     <Lock className="h-4 w-4" />
                     <span>Password</span>
                   </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="h-11"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (error) setError("");
+                      }}
+                      required
+                      className="h-11 pr-10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                      )}
+                    </button>
+                  </div>
                 </div>
+
+                {/* Error Display */}
+                {error && (
+                  <div className="rounded-md bg-red-50 p-4 border border-red-200">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <AlertCircle className="h-5 w-5 text-red-400" />
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-red-800">
+                          {error}
+                        </h3>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Forgot Password */}
                 {!isRegistering && (

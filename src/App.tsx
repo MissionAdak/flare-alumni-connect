@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AlumniDashboard from "./pages/AlumniDashboard";
@@ -25,11 +26,11 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/dashboard/alumni" element={<AlumniDashboard />} />
-            <Route path="/dashboard/student" element={<StudentDashboard />} />
-            <Route path="/dashboard/college" element={<CollegeDashboard />} />
-            <Route path="/dashboard/university" element={<UniversityDashboard />} />
-            <Route path="/dashboard/recruiter" element={<RecruiterDashboard />} />
+            <Route path="/dashboard/alumni" element={<ProtectedRoute><AlumniDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/student" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/college" element={<ProtectedRoute><CollegeDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/university" element={<ProtectedRoute><UniversityDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/recruiter" element={<ProtectedRoute><RecruiterDashboard /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -255,7 +255,7 @@ class ApiClient {
     }>(`/students/mentorship-sessions?${params}`);
   }
 
-  async getJobs(params: {
+  async getStudentJobs(params: {
     skills?: string[];
     location?: string;
     jobType?: string;
@@ -497,7 +497,7 @@ class ApiClient {
     return this.request<{
       jobs: any[];
       pagination: any;
-    }>(`/recruiters/jobs?${searchParams}`);
+    }>(`/recruiters/jobs?${params}`);
   }
 
   async updateJob(jobId: string, jobData: any) {
