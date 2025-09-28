@@ -27,7 +27,7 @@ const GoogleAuthCallback = () => {
           
           // Set user in auth context
           setUser(user);
-          setSession({ user });
+          setSession(null); // Google auth doesn't provide a Supabase session
           
           // Navigate to appropriate dashboard based on user role
           const userRole = user.role?.toLowerCase();
